@@ -1,22 +1,34 @@
 import sqlite3
 import funciones
 import os
+from colorama import init, Fore, Style
+
+# Inicializar colorama
+init(autoreset=True)
 
 def main():
     os.system('cls')
     funciones.crear_tabla()  # Asegúrate de que esta línea se ejecute
-    print("\n ############################################################\n")
-    print("\tBienvenido al programa de gestión de productos.")
-    print("\n ############################################################\n")
+    
+    # Mensaje de bienvenida en verde
+    print(Fore.GREEN + "\n ############################################################\n")
+    print(Fore.GREEN + "\tBienvenido al programa de gestión de productos.")
+    print(Fore.GREEN + "\n ############################################################\n")
 
     while True:
-        print("\nIngrese una opción del menú:\n\t1. Agregar producto al inventario\n\t2. Consultar de un producto\n\t3. Modificar la cantidad de un producto\n\t4. Eliminar un producto del inventario\n\t5. Listar productos registrados\n\t6. Listar productos con stock bajo\n\t7. Salir")
+        print("\nIngrese una opción del menú:\n\t1. Agregar producto al inventario\n\t2. Consultar de un producto\n\t3. Modificar la cantidad de un producto\n\t4. Eliminar un producto del inventario\n\t5. Listar productos registrados\n\t6. Listar productos con stock bajo\n\t7. Salir\n")
 
         opcion = input("Seleccione una opción: \n") #toma la opción ingresada por el usuario.
 
         if opcion == "1":
             os.system('cls')
             nombre = input("Ingrese el nombre del producto: ").upper()
+            
+            # Verificar si el producto ya existe
+            if funciones.producto_existe(nombre):
+                print(Fore.RED + f"El producto '{nombre}' ya existe en el inventario. Modifique el producto YA EXISTENTE.")
+                continue  # Volver al menú principal
+            
             descripcion = input("Ingrese la descripción del producto: ").upper()
             
             while True:
@@ -28,7 +40,7 @@ def main():
 
             while True:
                 try:
-                    precio = float (input("Ingrese el precio del producto: "))
+                    precio = float(input("Ingrese el precio del producto: "))
                     break
                 except ValueError:
                     print("Error: La cantidad debe ser un número entero. Inténtelo de nuevo.")
@@ -73,7 +85,6 @@ def main():
                 else:
                     print("Método de búsqueda no válido. Por favor, ingrese 'ID' o 'nombre'.")
 
-
         elif opcion == "4":  # Eliminar un producto del inventario
             os.system('cls')
             metodo_valido = False
@@ -94,7 +105,7 @@ def main():
             os.system('cls')
             productos = funciones.listar_productos()
             if productos:
-                print(f"Productos registrados: {productos}")
+                print(Fore.GREEN + f"Productos registrados: {productos}")
 
         elif opcion == "6":  # Opción para listar los productos de bajo stock dependiendo la cantidad definida por el usuario.
             os.system('cls')

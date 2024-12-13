@@ -1,5 +1,11 @@
 import sqlite3  
+from colorama import Fore, Style, init
 
+
+# Inicializar colorama
+init(autoreset=True)
+
+############################################################################
 def crear_tabla():
     conexion = sqlite3.connect("inventario.db")
     cursor = conexion.cursor()
@@ -13,12 +19,29 @@ def crear_tabla():
             categoria TEXT
         )
     ''')
+    print("Tabla 'productos' creada exitosamente.")
     conexion.commit()
     conexion.close()     
-    print("Tabla 'productos' creada exitosamente.")
+    
+###############################################################################
 
+#funcion para validar si existe o no el producto.
+def producto_existe(nombre):
+    conexion = sqlite3.connect("inventario.db")
+    cursor = conexion.cursor()
+    
+    cursor.execute('''
+        SELECT * FROM productos
+        WHERE nombre = ?
+    ''', (nombre,))
+    producto_existente = cursor.fetchone()
+    
+    conexion.close()
+    return producto_existente is not None
+##############################################################################
 
 #Llamada a la función agregar_producto()
+
 def agregar_producto(nombre, descripcion, cantidad, precio, categoria):
     nombre = nombre.upper()
     descripcion = descripcion.upper()
@@ -28,31 +51,22 @@ def agregar_producto(nombre, descripcion, cantidad, precio, categoria):
     try:
         cantidad = int(cantidad)
     except ValueError:
-        print("Error: La cantidad debe ser un número entero.")
+        print(Fore.RED + "Error: La cantidad debe ser un número entero.")
         return
     
     conexion = sqlite3.connect("inventario.db")
     cursor = conexion.cursor()
     
-    # Verificar si el producto ya existe
     cursor.execute('''
-        SELECT * FROM productos
-        WHERE nombre = ?
-    ''', (nombre,))
-    producto_existente = cursor.fetchone()
-    
-    if producto_existente:
-        print(f"El producto '{nombre}' ya existe en el inventario. Modifique el producto existente.")
-    else:
-        cursor.execute('''
-            INSERT INTO productos (nombre, descripcion, cantidad, precio, categoria)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (nombre, descripcion, cantidad, precio, categoria))
-        conexion.commit()
-        print(f"Producto '{nombre}' agregado al inventario.")
+        INSERT INTO productos (nombre, descripcion, cantidad, precio, categoria)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nombre, descripcion, cantidad, precio, categoria))
+    conexion.commit()
+    print(Fore.GREEN + f"\nProducto '{nombre}' agregado al inventario.")
     
     conexion.close()
 
+##############################################################################
 
 #Llamada a la función listar_productos()
 def listar_productos():
@@ -69,7 +83,7 @@ def listar_productos():
     
     # Verificar si hay productos en la base de datos
     if len(productos) == 0:
-        print("No hay productos registrados en el Inventario.")
+        print(Fore.RED + "No hay productos registrados en el Inventario.")
         return []
     else:
         # Definir los encabezados de las columnas
@@ -85,15 +99,15 @@ def listar_productos():
         format_str = " | ".join([f"{{:<{width}}}" for width in col_widths])
         
         # Imprimir los encabezados de la tabla
-        print(format_str.format(*headers))
-        print("-" * (sum(col_widths) + 3 * (len(headers) - 1)))
+        print(Fore.CYAN + format_str.format(*headers))
+        print(Fore.CYAN + "-" * (sum(col_widths) + 3 * (len(headers) - 1)))
         
         # Imprimir cada fila de la tabla
         for producto in productos:
-            print(format_str.format(*producto))
+            print(Fore.CYAN + format_str.format(*producto))
+            #return productos
         
-        #return productos
-        
+##############################################################################
     #Llamada a la función ActualizarProducto()
 def actualizar_producto(id_producto=None, nombre_producto=None, nueva_cantidad=None):
     try:
@@ -117,38 +131,59 @@ def actualizar_producto(id_producto=None, nombre_producto=None, nueva_cantidad=N
             raise ValueError("Producto no encontrado.")
         
         conexion.commit()
-        print(f"Cantidad del producto actualizada a {nueva_cantidad}.")
+        print(Fore.GREEN + f"Cantidad del producto actualizada a {nueva_cantidad}.")
     except ValueError as ve:
         print(ve)
     except sqlite3.Error as e:
-        print(f"Error en la base de datos: {e}")
+        print(Fore.RED +f"Error en la base de datos: {e}")
     finally:
         conexion.close()
+##############################################################################
 
     #Llamada a la función EliminarProducto()
 def eliminar_producto(id_producto=None, nombre_producto=None):
     conexion = sqlite3.connect("inventario.db")
     cursor = conexion.cursor()
+    
+    # Obtener los detalles del producto antes de eliminarlo
+    if id_producto:
+        cursor.execute('''
+            SELECT * FROM productos
+            WHERE id = ?
+        ''', (id_producto,))
+    elif nombre_producto:
+        nombre_producto = nombre_producto.upper()
+        cursor.execute('''
+            SELECT * FROM productos
+            WHERE nombre = ?
+        ''', (nombre_producto,))
+    
+    producto = cursor.fetchone()
+    
+    if not producto:
+        print(Fore.RED + "\nNo se encontró un producto con el ID o nombre especificado.")
+        conexion.close()
+        return
+    
+    # Eliminar el producto
     if id_producto:
         cursor.execute('''
             DELETE FROM productos
             WHERE id = ?
         ''', (id_producto,))
     elif nombre_producto:
-        nombre_producto = nombre_producto.upper()
         cursor.execute('''
             DELETE FROM productos
             WHERE nombre = ?
         ''', (nombre_producto,))
     
-    if cursor.rowcount == 0:
-        print("No se encontró un producto con el ID o nombre especificado.")
-    else:
-        print("Producto eliminado del inventario.")
-    
     conexion.commit()
+    
+    # Mostrar el producto eliminado
+    print(Fore.RED + f"\nProducto '{producto[1]}' eliminado del inventario.")
+    
     conexion.close()
-
+##############################################################################
 
 #Llamada a la función buscar_producto_por_nombre()
 def buscar_producto(id_producto=None, nombre_producto=None):
@@ -166,17 +201,18 @@ def buscar_producto(id_producto=None, nombre_producto=None):
             WHERE nombre = ?
         ''', (nombre_producto,))
     else:
-        print("Debe proporcionar un ID o un nombre para buscar el producto.")
+        print(Fore.YELLOW +"\nDebe proporcionar un ID o un nombre para buscar el producto.")
         return None
     
     producto = cursor.fetchone()
     conexion.close()
     if producto:
-        print(f"Producto encontrado - ID: {producto[0]}, Nombre: {producto[1]}, Descripción: {producto[2]}, Cantidad: {producto[3]}, Precio: {producto[4]}, Categoría: {producto[5]}")
+        print(Fore.LIGHTBLUE_EX +f"\nProducto encontrado - ID: {producto[0]}, Nombre: {producto[1]}, Descripción: {producto[2]}, Cantidad: {producto[3]}, Precio: {producto[4]}, Categoría: {producto[5]}")
         return producto
     else:
-        print("Producto no encontrado.")
+        print(Fore.RED +"\nProducto no encontrado.")
         return None
+##############################################################################
 
 #Llamada a la función ListarStockBajo()
 def listar_stock_bajo(cantidad_limite):
@@ -194,7 +230,7 @@ def listar_stock_bajo(cantidad_limite):
     
     # Verificar si hay productos con stock bajo
     if len(productos_bajo_stock) == 0:
-        print("No hay productos con stock bajo.")
+        print(Fore.RED + "\nNo hay productos con stock bajo.")
     else:
         # Definir los encabezados de las columnas
         headers = ["ID", "Nombre", "Descripción", "Cantidad", "Precio", "Categoría"]
@@ -208,10 +244,11 @@ def listar_stock_bajo(cantidad_limite):
         # Crear una cadena de formato para la tabla
         format_str = " | ".join([f"{{:<{width}}}" for width in col_widths])
         
-        # Imprimir los encabezados de la tabla
-        print(format_str.format(*headers))
-        print("-" * (sum(col_widths) + 3 * (len(headers) - 1)))
+        # Imprimir los encabezados de la tabla en verde
+        print(Fore.GREEN + format_str.format(*headers))
+        print(Fore.GREEN + "-" * (sum(col_widths) + 3 * (len(headers) - 1)))
         
-        # Imprimir cada fila de la tabla
+        # Imprimir cada fila de la tabla en verde
         for producto in productos_bajo_stock:
-            print(format_str.format(*producto))
+            print(Fore.GREEN + format_str.format(*producto))
+##############################################################################
