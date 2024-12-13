@@ -34,16 +34,20 @@ def main():
             while True:
                 try:
                     cantidad = int(input("Ingrese la cantidad del producto: "))
+                    if cantidad <= 0:
+                        raise ValueError("La cantidad debe ser mayor a 0.")
                     break
-                except ValueError:
-                    print("Error: La cantidad debe ser un número entero. Inténtelo de nuevo.")
+                except ValueError as e:
+                    print(Fore.RED + f"Error: {e}. Inténtelo de nuevo.")
 
             while True:
                 try:
                     precio = float(input("Ingrese el precio del producto: "))
+                    if precio <= 0:
+                        raise ValueError("El precio debe ser mayor a 0.")
                     break
-                except ValueError:
-                    print("Error: La cantidad debe ser un número entero. Inténtelo de nuevo.")
+                except ValueError as e:
+                    print(Fore.RED + f"Error: {e}. Inténtelo de nuevo.")
             
             categoria = input("Ingrese la categoría del producto: ").upper()
             funciones.agregar_producto(nombre, descripcion, cantidad, precio, categoria)

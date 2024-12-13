@@ -47,11 +47,24 @@ def agregar_producto(nombre, descripcion, cantidad, precio, categoria):
     descripcion = descripcion.upper()
     categoria = categoria.upper()
     
-    # Validar que la cantidad sea un entero
+    # Validar que la cantidad sea un entero mayor a 0
     try:
         cantidad = int(cantidad)
+        if cantidad <= 0:
+            print(Fore.RED + "Error: La cantidad debe ser mayor a 0.")
+            return
     except ValueError:
         print(Fore.RED + "Error: La cantidad debe ser un número entero.")
+        return
+    
+    # Validar que el precio sea un float mayor a 0
+    try:
+        precio = float(precio)
+        if precio <= 0:
+            print(Fore.RED + "Error: El precio debe ser mayor a 0.")
+            return
+    except ValueError:
+        print(Fore.RED + "Error: El precio debe ser un número.")
         return
     
     conexion = sqlite3.connect("inventario.db")
